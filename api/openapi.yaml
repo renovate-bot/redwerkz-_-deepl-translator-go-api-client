@@ -1,0 +1,1666 @@
+openapi: 3.0.3
+info:
+  contact:
+    name: DeepL - Contact us
+    url: https://www.deepl.com/contact-us
+  description: The DeepL API provides programmatic access to DeepL’s machine translation
+    technology.
+  termsOfService: https://www.deepl.com/pro-license/
+  title: DeepL API
+  version: 2.0.0
+externalDocs:
+  description: DeepL Pro - Plans and pricing
+  url: https://www.deepl.com/pro?cta=header-prices/
+servers:
+- description: DeepL API Pro
+  url: https://api.deepl.com/v2
+- description: DeepL API Free
+  url: https://api-free.deepl.com/v2
+tags:
+- description: "The text-translation API currently consists of a single endpoint,\
+    \ `translate`, which is described below."
+  name: TranslatingText
+- description: "By default, the translation engine does not take tags into account.\n\
+    By setting the `tag_handling` parameter to `xml`, the API will process XML input\
+    \ by extracting text out of the structure,\nsplitting it into individual sentences,\
+    \ translating them, and placing them back into the XML structure.\n\nFor the translation\
+    \ of HTML content please see [Handling HTML (Beta)](https://www.deepl.com/docs-api/html)\
+    \ \n\nWe will look at the XML handling engine in the following cases:\n\n- Sentences\
+    \ with markup\n- Structured content\n- Restricting splitting\n- Disabling automatic\
+    \ outline detection\n- Splitting on newlines\n- Ignored text"
+  name: HandlingXML
+- description: "By default, the translation engine does not take HTML tags into account.\n\
+    By setting the `tag_handling` parameter to `html`, the API will process HTML input\
+    \ by extracting text\nout of the structure, splitting it into individual sentences,\
+    \ translating them, and placing them back\ninto the HTML structure.\nThis functionality\
+    \ is in beta. If you encounter issues, please let us know at support@DeepL.com.\n\
+    \nFor the translation of generic XML content please see [Handling XML](https://www.deepl.com/docs-api/xml)"
+  name: HandlingHTML
+- description: "The document translation API allows you to translate whole documents.\n\
+    Translating a document usually involves three types of HTTP requests:\n- [upload](https://www.deepl.com/docs-api/documents/translate-document)\
+    \ the document to be translated,\n- periodically [check the status](https://www.deepl.com/docs-api/documents/get-document-status)\
+    \ of the document translation,\n- once the status call reports `done`, [download](https://www.deepl.com/docs-api/documents/download-document)\
+    \ the translated document.\n\nPlease note that with every submitted document of\
+    \ type .pptx, .docx, or .pdf,\nyou are billed a minimum of 50,000 characters with\
+    \ the DeepL API plan,\nno matter how many characters are included in the document."
+  name: TranslatingDocuments
+- description: "The *glossary* functions allow you to create, inspect, and delete\
+    \ glossaries.\nGlossaries created with the glossary function can be used in translate\
+    \ requests by specifying the\n`glossary_id` parameter.\nIf you encounter issues,\
+    \ please let us know at support@DeepL.com.\n\nCurrently, glossaries for the following\
+    \ language combinations are supported:\n\n- EN (English) → DE (German)\n- DE (German)\
+    \ → EN (English)\n- EN (English) → FR (French)\n- FR (French) → EN (English)\n\
+    - EN (English) → ES (Spanish)\n- ES (Spanish) → EN (English)\n- EN (English) →\
+    \ JA (Japanese)\n- JA (Japanese) → EN (English)\n- DE (German) → FR (French)\n\
+    - FR (French) → DE (German)\n\nThe maximum size limit for a glossary is 10 MiB\
+    \ = 10485760 bytes and each source/target text,\nas well as the name of the glossary,\
+    \ is limited to 1024 UTF-8 bytes.\nA total of 1000 glossaries are allowed per\
+    \ account.\n\n\nGlossaries created via the DeepL API are distinct from glossaries\
+    \ created via the DeepL website and DeepL apps.\nThis means API glossaries cannot\
+    \ be used on the website and vice versa."
+  name: ManagingGlossaries
+- description: Information about API usage and value ranges
+  name: MetaInformation
+paths:
+  /translate:
+    post:
+      description: The translate function.
+      operationId: translateText
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            encoding:
+              text:
+                explode: true
+                style: form
+            examples:
+              Basic:
+                summary: Basic Example
+                value:
+                  text:
+                  - "Hello, world"
+                  target_lang: DE
+              Glossary:
+                summary: Using a Glossary
+                value:
+                  text:
+                  - "Hello, world"
+                  target_lang: DE
+                  source_lang: EN
+                  glossary_id: "[yourGlossaryId]"
+              MultipleSentences:
+                summary: Multiple Sentences
+                value:
+                  text:
+                  - The table is green. The chair is black.
+                  target_lang: DE
+              LargeVolumes:
+                summary: Large Volumes of Text
+                value:
+                  text:
+                  - This is the first sentence.
+                  - This is the second sentence.
+                  - This is the third sentence.
+                  target_lang: DE
+            schema:
+              $ref: '#/components/schemas/translateText_request'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                Basic:
+                  value:
+                    translations:
+                    - detected_source_language: EN
+                      text: "Hallo, Welt!"
+                Glossary:
+                  value:
+                    translations:
+                    - text: "Hallo, Welt!"
+                MultipleSentences:
+                  value:
+                    translations:
+                    - detected_source_language: EN
+                      text: Der Tisch ist grün. Der Stuhl ist schwarz.
+                LargeVolumes:
+                  value:
+                    translations:
+                    - detected_source_language: EN
+                      text: Das ist der erste Satz.
+                    - detected_source_language: EN
+                      text: Das ist der zweite Satz.
+                    - detected_source_language: EN
+                      text: Dies ist der dritte Satz.
+              schema:
+                $ref: '#/components/schemas/translateText_200_response'
+          description: The translate function returns a JSON representation of the
+            translations in the order the text parameters have been specified.
+        "400":
+          description: Bad request. Please check error message and your parameters.
+        "403":
+          description: Authorization failed. Please supply a valid `DeepL-Auth-Key`
+            via the `Authorization` header.
+        "404":
+          description: The requested resource could not be found.
+        "413":
+          description: The request size exceeds the limit.
+        "414":
+          description: "The request URL is too long. You can avoid this error by using\
+            \ a POST request instead of a GET request, and sending the parameters\
+            \ in the HTTP body."
+        "429":
+          description: Too many requests. Please wait and resend your request.
+        "456":
+          description: Quota exceeded. The character limit has been reached.
+        "500":
+          description: Internal error.
+        "504":
+          description: Resource currently unavailable. Try again later.
+        "529":
+          description: Too many requests. Please wait and resend your request.
+      security:
+      - auth_header: []
+      summary: Request Translation
+      tags:
+      - TranslatingText
+  /document:
+    post:
+      description: "This call uploads a document and queues it for translation.\n\
+        The call returns once the upload is complete, returning a document ID and\
+        \ key which can be used to\n[query the translation status](https://www.deepl.com/docs-api/documents/get-document-status)\n\
+        and to [download the translated document](https://www.deepl.com/docs-api/documents/download-document)\
+        \ once translation is complete.\n\n\n\nBecause the request includes a file\
+        \ upload, it must be an HTTP POST request with content type `multipart/form-data`.\n\
+        \n\nPlease be aware that the uploaded document is automatically removed from\
+        \ the server once the translated document has been downloaded.\nYou have to\
+        \ upload the document again in order to restart the translation.\n\n\nThe\
+        \ maximum upload limit for any document is 10 MiB and 1.000.000 characters.\n\
+        \n\nYou may specify the glossary to use for the document translation using\
+        \ the `glossary_id` parameter.\n**Important:** This requires the `source_lang`\
+        \ parameter to be set and the language pair of the glossary has to match the\
+        \ language pair of the request."
+      operationId: translateDocument
+      requestBody:
+        content:
+          multipart/form-data:
+            example:
+              target_lang: DE
+            schema:
+              $ref: '#/components/schemas/translateDocument_request'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                document_id: 04DE5AD98A02647D83285A36021911C6
+                document_key: 0CB0054F1C132C1625B392EADDA41CB754A742822F6877173029A6C487E7F60A
+              schema:
+                $ref: '#/components/schemas/translateDocument_200_response'
+          description: "The document function returns a JSON object containing the\
+            \ ID and encryption key assigned to the uploaded document. Once received\
+            \ by the server, uploaded documents are immediately encrypted using a\
+            \ uniquely generated encryption key. This key is not persistently stored\
+            \ on the server. Therefore, it must be stored by the client and sent back\
+            \ to the server with every subsequent request that refers to this particular\
+            \ document."
+        "400":
+          description: Bad request. Please check error message and your parameters.
+        "403":
+          description: Authorization failed. Please supply a valid `DeepL-Auth-Key`
+            via the `Authorization` header.
+        "404":
+          description: The requested resource could not be found.
+        "413":
+          description: The request size exceeds the limit.
+        "429":
+          description: Too many requests. Please wait and resend your request.
+        "456":
+          description: Quota exceeded. The character limit has been reached.
+        "500":
+          description: Internal error.
+        "504":
+          description: Resource currently unavailable. Try again later.
+        "529":
+          description: Too many requests. Please wait and resend your request.
+      security:
+      - auth_header: []
+      summary: Upload and Translate a Document
+      tags:
+      - TranslatingDocuments
+  /document/{document_id}:
+    post:
+      description: "Retrieve the current status of a document translation process.\n\
+        If the translation is still in progress, the estimated time remaining is also\
+        \ included in the response."
+      operationId: getDocumentStatus
+      parameters:
+      - description: The document ID that was sent to the client when the document
+          was uploaded to the API.
+        example: 04DE5AD98A02647D83285A36021911C6
+        explode: false
+        in: path
+        name: document_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        $ref: '#/components/requestBodies/DocumentKey'
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                translating:
+                  summary: Translating
+                  value:
+                    document_id: 04DE5AD98A02647D83285A36021911C6
+                    status: translating
+                    seconds_remaining: 20
+                done:
+                  summary: Done
+                  value:
+                    document_id: 04DE5AD98A02647D83285A36021911C6
+                    status: done
+                    billed_characters: 1337
+                queued:
+                  summary: Queued
+                  value:
+                    document_id: 04DE5AD98A02647D83285A36021911C6
+                    status: queued
+                error:
+                  summary: Error
+                  value:
+                    document_id: 04DE5AD98A02647D83285A36021911C6
+                    status: error
+                    message: Source and target language are equal.
+              schema:
+                $ref: '#/components/schemas/getDocumentStatus_200_response'
+          description: "The document status request returns a JSON object containing\
+            \ the document ID that was used in the request as well as string indicating\
+            \ the current status of the translation process. While the translation\
+            \ is running, the estimated number of seconds remaining until the process\
+            \ is done is also included in the response."
+        "400":
+          description: Bad request. Please check error message and your parameters.
+        "403":
+          description: Authorization failed. Please supply a valid `DeepL-Auth-Key`
+            via the `Authorization` header.
+        "404":
+          description: The requested resource could not be found.
+        "413":
+          description: The request size exceeds the limit.
+        "429":
+          description: Too many requests. Please wait and resend your request.
+        "456":
+          description: Quota exceeded. The character limit has been reached.
+        "500":
+          description: Internal error.
+        "504":
+          description: Resource currently unavailable. Try again later.
+        "529":
+          description: Too many requests. Please wait and resend your request.
+      security:
+      - auth_header: []
+      summary: Check Document Status
+      tags:
+      - TranslatingDocuments
+  /document/{document_id}/result:
+    post:
+      description: "Once the status of the document translation process is `done`,\
+        \ the result can be downloaded.\n\n\nFor privacy reasons the translated document\
+        \ is automatically removed from the server once it was downloaded and cannot\
+        \ be downloaded again."
+      operationId: downloadDocument
+      parameters:
+      - description: The document ID that was sent to the client when the document
+          was uploaded to the API.
+        example: 04DE5AD98A02647D83285A36021911C6
+        explode: false
+        in: path
+        name: document_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        $ref: '#/components/requestBodies/DocumentKey'
+      responses:
+        "200":
+          content:
+            application/octet-stream:
+              examples:
+                OK:
+                  description: binary document data
+                  summary: OK
+              schema:
+                format: binary
+                type: string
+          description: The document is provided as a download. There is no other data
+            included in the response besides the document data. The content type used
+            in the response corresponds to the document type.
+        "400":
+          description: Bad request. Please check error message and your parameters.
+        "403":
+          description: Authorization failed. Please supply a valid `DeepL-Auth-Key`
+            via the `Authorization` header.
+        "404":
+          content:
+            application/json:
+              examples:
+                NotFound:
+                  summary: Not Found
+                  value:
+                    message: Document not found
+              schema:
+                $ref: '#/components/schemas/DocumentTranslationError'
+          description: "Trying to download a document using a non-existing document\
+            \ ID or the wrong document key will result in a 404 error. As stated above,\
+            \ documents can only be downloaded once before they are deleted from the\
+            \ server and their document ID is invalidated."
+        "413":
+          description: The request size exceeds the limit.
+        "429":
+          description: Too many requests. Please wait and resend your request.
+        "456":
+          description: Quota exceeded. The character limit has been reached.
+        "500":
+          description: Internal error.
+        "503":
+          content:
+            application/json:
+              examples:
+                AlreadyDownloaded:
+                  summary: Already downloaded
+                  value:
+                    message: Document already downloaded
+              schema:
+                $ref: '#/components/schemas/DocumentTranslationError'
+          description: |-
+            A 503 result will be returned if the user tries to download a translated document that is currently being processed and is not yet ready for download.
+            Please make sure to check that the document status is 'done' before trying to send a download request.
+        "504":
+          description: Resource currently unavailable. Try again later.
+        "529":
+          description: Too many requests. Please wait and resend your request.
+      security:
+      - auth_header: []
+      summary: Download Translated Document
+      tags:
+      - TranslatingDocuments
+  /glossary-language-pairs:
+    get:
+      description: Retrieve the list of language pairs supported by the glossary feature.
+      operationId: listGlossaryLanguages
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                supported_languages:
+                - source_lang: de
+                  target_lang: en
+                - source_lang: en
+                  target_lang: de
+              schema:
+                $ref: '#/components/schemas/listGlossaryLanguages_200_response'
+          description: A JSON object containing the language pairs in its `supported_languages`
+            property.
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid glossary entries provided
+                detail: Key with the index 1 (starting at position 13) duplicates
+                  key with the index 0 (starting at position 0)
+              schema:
+                $ref: '#/components/schemas/listGlossaryLanguages_400_response'
+          description: Bad request. Please check error message and your parameters.
+        "401":
+          description: Authorization failed. Please supply a valid `DeepL-Auth-Key`
+            via the `Authorization` header.
+        "403":
+          description: "Forbidden. The access to the requested resource is denied,\
+            \ because of insufficient access rights."
+        "404":
+          description: The requested resource could not be found.
+        "413":
+          description: The request size exceeds the limit.
+        "415":
+          description: The requested entries format specified in the `Accept` header
+            is not supported.
+        "429":
+          description: Too many requests. Please wait and resend your request.
+        "456":
+          description: Quota exceeded. The character limit has been reached.
+        "500":
+          description: Internal error.
+        "503":
+          description: Resource currently unavailable. Try again later.
+        "529":
+          description: Too many requests. Please wait and resend your request.
+      security:
+      - auth_header: []
+      summary: List Language Pairs Supported by Glossaries
+      tags:
+      - ManagingGlossaries
+  /glossaries:
+    get:
+      description: "List all glossaries and their meta-information, but not the glossary\
+        \ entries."
+      operationId: listGlossaries
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                glossaries:
+                - glossary_id: def3a26b-3e84-45b3-84ae-0c0aaf3525f7
+                  name: My Glossary
+                  ready: true
+                  source_lang: EN
+                  target_lang: DE
+                  creation_time: 2021-08-03T14:16:18.329Z
+                  entry_count: 1
+              schema:
+                $ref: '#/components/schemas/listGlossaries_200_response'
+          description: JSON object containing a the glossaries.
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid glossary entries provided
+                detail: Key with the index 1 (starting at position 13) duplicates
+                  key with the index 0 (starting at position 0)
+              schema:
+                $ref: '#/components/schemas/listGlossaryLanguages_400_response'
+          description: Bad request. Please check error message and your parameters.
+        "401":
+          description: Authorization failed. Please supply a valid `DeepL-Auth-Key`
+            via the `Authorization` header.
+        "403":
+          description: "Forbidden. The access to the requested resource is denied,\
+            \ because of insufficient access rights."
+        "404":
+          description: The requested resource could not be found.
+        "413":
+          description: The request size exceeds the limit.
+        "415":
+          description: The requested entries format specified in the `Accept` header
+            is not supported.
+        "429":
+          description: Too many requests. Please wait and resend your request.
+        "456":
+          description: Quota exceeded. The character limit has been reached.
+        "500":
+          description: Internal error.
+        "503":
+          description: Resource currently unavailable. Try again later.
+        "529":
+          description: Too many requests. Please wait and resend your request.
+      security:
+      - auth_header: []
+      summary: List all Glossaries
+      tags:
+      - ManagingGlossaries
+    post:
+      operationId: createGlossary
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/createGlossary_request'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Glossary'
+          description: The function for creating a glossary returns a JSON object
+            containing the ID of the newly created glossary and a boolean flag that
+            indicates if the created glossary can already be used in translate requests.
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid glossary entries provided
+                detail: Key with the index 1 (starting at position 13) duplicates
+                  key with the index 0 (starting at position 0)
+              schema:
+                $ref: '#/components/schemas/listGlossaryLanguages_400_response'
+          description: Bad request. Please check error message and your parameters.
+        "401":
+          description: Authorization failed. Please supply a valid `DeepL-Auth-Key`
+            via the `Authorization` header.
+        "403":
+          description: "Forbidden. The access to the requested resource is denied,\
+            \ because of insufficient access rights."
+        "404":
+          description: The requested resource could not be found.
+        "413":
+          description: The request size exceeds the limit.
+        "415":
+          description: The requested entries format specified in the `Accept` header
+            is not supported.
+        "429":
+          description: Too many requests. Please wait and resend your request.
+        "456":
+          description: Quota exceeded. The character limit has been reached.
+        "500":
+          description: Internal error.
+        "503":
+          description: Resource currently unavailable. Try again later.
+        "529":
+          description: Too many requests. Please wait and resend your request.
+      security:
+      - auth_header: []
+      summary: Create a Glossary
+      tags:
+      - ManagingGlossaries
+  /glossaries/{glossary_id}:
+    delete:
+      description: Deletes the specified glossary.
+      operationId: deleteGlossary
+      parameters:
+      - description: A unique ID assigned to the glossary.
+        explode: false
+        in: path
+        name: glossary_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Returns no content upon success.
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid glossary entries provided
+                detail: Key with the index 1 (starting at position 13) duplicates
+                  key with the index 0 (starting at position 0)
+              schema:
+                $ref: '#/components/schemas/listGlossaryLanguages_400_response'
+          description: Bad request. Please check error message and your parameters.
+        "401":
+          description: Authorization failed. Please supply a valid `DeepL-Auth-Key`
+            via the `Authorization` header.
+        "403":
+          description: "Forbidden. The access to the requested resource is denied,\
+            \ because of insufficient access rights."
+        "404":
+          description: The requested resource could not be found.
+        "413":
+          description: The request size exceeds the limit.
+        "415":
+          description: The requested entries format specified in the `Accept` header
+            is not supported.
+        "429":
+          description: Too many requests. Please wait and resend your request.
+        "456":
+          description: Quota exceeded. The character limit has been reached.
+        "500":
+          description: Internal error.
+        "503":
+          description: Resource currently unavailable. Try again later.
+        "529":
+          description: Too many requests. Please wait and resend your request.
+      security:
+      - auth_header: []
+      summary: Delete a Glossary
+      tags:
+      - ManagingGlossaries
+    get:
+      description: "Retrieve meta information for a single glossary, omitting the\
+        \ glossary entries."
+      operationId: getGlossary
+      parameters:
+      - description: A unique ID assigned to the glossary.
+        explode: false
+        in: path
+        name: glossary_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                id: def3a26b-3e84-45b3-84ae-0c0aaf3525f7
+                name: My Glossary
+                ready: true
+                source_lang: EN
+                target_lang: DE
+                creation_time: 2021-08-03T14:16:18.329Z
+                entry_count: 1
+              schema:
+                $ref: '#/components/schemas/Glossary'
+          description: JSON object containing the glossary meta-information.
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid glossary entries provided
+                detail: Key with the index 1 (starting at position 13) duplicates
+                  key with the index 0 (starting at position 0)
+              schema:
+                $ref: '#/components/schemas/listGlossaryLanguages_400_response'
+          description: Bad request. Please check error message and your parameters.
+        "401":
+          description: Authorization failed. Please supply a valid `DeepL-Auth-Key`
+            via the `Authorization` header.
+        "403":
+          description: "Forbidden. The access to the requested resource is denied,\
+            \ because of insufficient access rights."
+        "404":
+          description: The requested resource could not be found.
+        "413":
+          description: The request size exceeds the limit.
+        "415":
+          description: The requested entries format specified in the `Accept` header
+            is not supported.
+        "429":
+          description: Too many requests. Please wait and resend your request.
+        "456":
+          description: Quota exceeded. The character limit has been reached.
+        "500":
+          description: Internal error.
+        "503":
+          description: Resource currently unavailable. Try again later.
+        "529":
+          description: Too many requests. Please wait and resend your request.
+      security:
+      - auth_header: []
+      summary: Retrieve Glossary Details
+      tags:
+      - ManagingGlossaries
+  /glossaries/{glossary_id}/entries:
+    get:
+      description: List the entries of a single glossary in the format specified by
+        the `Accept` header.
+      operationId: getGlossaryEntries
+      parameters:
+      - description: A unique ID assigned to the glossary.
+        explode: false
+        in: path
+        name: glossary_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: "The requested format of the returned glossary entries. Currently,\
+          \ supports only `text/tab-separated-values`."
+        example: text/tab-separated-values
+        explode: false
+        in: header
+        name: Accept
+        required: false
+        schema:
+          default: text/tab-separated-values
+          enum:
+          - text/tab-separated-values
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            text/tab-separated-values:
+              example: "Hello!\tGuten Tag!"
+          description: The entries in the requested format.
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid glossary entries provided
+                detail: Key with the index 1 (starting at position 13) duplicates
+                  key with the index 0 (starting at position 0)
+              schema:
+                $ref: '#/components/schemas/listGlossaryLanguages_400_response'
+          description: Bad request. Please check error message and your parameters.
+        "401":
+          description: Authorization failed. Please supply a valid `DeepL-Auth-Key`
+            via the `Authorization` header.
+        "403":
+          description: "Forbidden. The access to the requested resource is denied,\
+            \ because of insufficient access rights."
+        "404":
+          description: The requested resource could not be found.
+        "413":
+          description: The request size exceeds the limit.
+        "415":
+          description: The requested entries format specified in the `Accept` header
+            is not supported.
+        "429":
+          description: Too many requests. Please wait and resend your request.
+        "456":
+          description: Quota exceeded. The character limit has been reached.
+        "500":
+          description: Internal error.
+        "503":
+          description: Resource currently unavailable. Try again later.
+        "529":
+          description: Too many requests. Please wait and resend your request.
+      security:
+      - auth_header: []
+      summary: Retrieve Glossary Entries
+      tags:
+      - ManagingGlossaries
+  /usage:
+    get:
+      description: "Retrieve usage information within the current billing period together\
+        \ with the corresponding account limits. Usage is returned for:\n- translated\
+        \ characters\n- translated documents\n- translated documents, team totals\
+        \ (for team accounts only)\n\nCharacter usage includes both text and document\
+        \ translations, and is measured by the source text length in Unicode code\
+        \ points,\nso for example \"A\", \"Δ\", \"あ\", and \"深\" are each counted\
+        \ as a single character.\n\nDocument usage only includes document translations,\
+        \ and is measured in individual documents.\n\nDepending on the user account\
+        \ type, some usage types will be omitted.\nCharacter usage is only included\
+        \ for developer accounts.\nDocument usage is only included for non-developer\
+        \ accounts, and team-combined document usage is only included for non-developer\
+        \ team accounts."
+      operationId: getUsage
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                character_count: 180118
+                character_limit: 1250000
+              schema:
+                $ref: '#/components/schemas/getUsage_200_response'
+          description: The account's usage and limits.
+        "400":
+          description: Bad request. Please check error message and your parameters.
+        "403":
+          description: Authorization failed. Please supply a valid `DeepL-Auth-Key`
+            via the `Authorization` header.
+        "404":
+          description: The requested resource could not be found.
+        "413":
+          description: The request size exceeds the limit.
+        "429":
+          description: Too many requests. Please wait and resend your request.
+        "456":
+          description: Quota exceeded. The character limit has been reached.
+        "500":
+          description: Internal error.
+        "504":
+          description: Resource currently unavailable. Try again later.
+        "529":
+          description: Too many requests. Please wait and resend your request.
+      security:
+      - auth_header: []
+      summary: Check Usage and Limits
+      tags:
+      - MetaInformation
+  /languages:
+    get:
+      description: "Retrieve the list of languages that are currently supported for\
+        \ translation, either as source or target language, respectively."
+      operationId: getLanguages
+      parameters:
+      - description: "Sets whether source or target languages should be listed. Possible\
+          \ options are:\n * `source` (default): For languages that can be used in\
+          \ the `source_lang` parameter of [translate](https://www.deepl.com/docs-api/translating-text/translate-text)\
+          \ requests.\n * `target`: For languages that can be used in the `target_lang`\
+          \ parameter of [translate](https://www.deepl.com/docs-api/translating-text/translate-text)\
+          \ requests."
+        example: target
+        explode: true
+        in: query
+        name: type
+        required: false
+        schema:
+          default: source
+          enum:
+          - source
+          - target
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+              - language: BG
+                name: Bulgarian
+                supports_formality: false
+              - language: CS
+                name: Czech
+                supports_formality: false
+              - language: DA
+                name: Danish
+                supports_formality: false
+              - language: DE
+                name: German
+                supports_formality: true
+              - language: EL
+                name: Greek
+                supports_formality: false
+              - language: EN-GB
+                name: English (British)
+                supports_formality: false
+              - language: EN-US
+                name: English (American)
+                supports_formality: false
+              - language: ES
+                name: Spanish
+                supports_formality: true
+              - language: ET
+                name: Estonian
+                supports_formality: false
+              - language: FI
+                name: Finnish
+                supports_formality: false
+              - language: FR
+                name: French
+                supports_formality: true
+              - language: HU
+                name: Hungarian
+                supports_formality: false
+              - language: ID
+                name: Indonesian
+                supports_formality: false
+              - language: IT
+                name: Italian
+                supports_formality: true
+              - language: JA
+                name: Japanese
+                supports_formality: false
+              - language: LT
+                name: Lithuanian
+                supports_formality: false
+              - language: LV
+                name: Latvian
+                supports_formality: false
+              - language: NL
+                name: Dutch
+                supports_formality: true
+              - language: PL
+                name: Polish
+                supports_formality: true
+              - language: PT-BR
+                name: Portuguese (Brazilian)
+                supports_formality: true
+              - language: PT-PT
+                name: Portuguese (European)
+                supports_formality: true
+              - language: RO
+                name: Romanian
+                supports_formality: false
+              - language: RU
+                name: Russian
+                supports_formality: true
+              - language: SK
+                name: Slovak
+                supports_formality: false
+              - language: SL
+                name: Slovenian
+                supports_formality: false
+              - language: SV
+                name: Swedish
+                supports_formality: false
+              - language: TR
+                name: Turkish
+                supports_formality: false
+              - language: ZH
+                name: Chinese
+                supports_formality: false
+              schema:
+                items:
+                  $ref: '#/components/schemas/getLanguages_200_response_inner'
+                type: array
+          description: JSON array where each item represents a supported language.
+        "400":
+          description: Bad request. Please check error message and your parameters.
+        "403":
+          description: Authorization failed. Please supply a valid `DeepL-Auth-Key`
+            via the `Authorization` header.
+        "404":
+          description: The requested resource could not be found.
+        "413":
+          description: The request size exceeds the limit.
+        "429":
+          description: Too many requests. Please wait and resend your request.
+        "456":
+          description: Quota exceeded. The character limit has been reached.
+        "500":
+          description: Internal error.
+        "504":
+          description: Resource currently unavailable. Try again later.
+        "529":
+          description: Too many requests. Please wait and resend your request.
+      security:
+      - auth_header: []
+      summary: Retrieve Supported Languages
+      tags:
+      - MetaInformation
+components:
+  parameters:
+    DocumentID:
+      description: The document ID that was sent to the client when the document was
+        uploaded to the API.
+      example: 04DE5AD98A02647D83285A36021911C6
+      explode: false
+      in: path
+      name: document_id
+      required: true
+      schema:
+        type: string
+      style: simple
+    GlossaryID:
+      description: A unique ID assigned to the glossary.
+      explode: false
+      in: path
+      name: glossary_id
+      required: true
+      schema:
+        type: string
+      style: simple
+    SourceLanguage:
+      explode: true
+      in: query
+      name: source_lang
+      required: false
+      schema:
+        $ref: '#/components/schemas/SourceLanguage'
+      style: form
+    TargetLanguage:
+      explode: true
+      in: query
+      name: target_lang
+      required: true
+      schema:
+        $ref: '#/components/schemas/TargetLanguage'
+      style: form
+  requestBodies:
+    DocumentKey:
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            $ref: '#/components/schemas/getDocumentStatus_request'
+      required: true
+  responses:
+    BadRequest:
+      description: Bad request. Please check error message and your parameters.
+    BadRequestGlossaries:
+      content:
+        application/json:
+          example:
+            message: Invalid glossary entries provided
+            detail: Key with the index 1 (starting at position 13) duplicates key
+              with the index 0 (starting at position 0)
+          schema:
+            $ref: '#/components/schemas/listGlossaryLanguages_400_response'
+      description: Bad request. Please check error message and your parameters.
+    Unauthorized:
+      description: Authorization failed. Please supply a valid `DeepL-Auth-Key` via
+        the `Authorization` header.
+    Forbidden:
+      description: Authorization failed. Please supply a valid `DeepL-Auth-Key` via
+        the `Authorization` header.
+    ForbiddenGlossaries:
+      description: "Forbidden. The access to the requested resource is denied, because\
+        \ of insufficient access rights."
+    NotFound:
+      description: The requested resource could not be found.
+    NotFound404DocTransDownload:
+      content:
+        application/json:
+          examples:
+            NotFound:
+              summary: Not Found
+              value:
+                message: Document not found
+          schema:
+            $ref: '#/components/schemas/DocumentTranslationError'
+      description: "Trying to download a document using a non-existing document ID\
+        \ or the wrong document key will result in a 404 error. As stated above, documents\
+        \ can only be downloaded once before they are deleted from the server and\
+        \ their document ID is invalidated."
+    PayloadTooLarge:
+      description: The request size exceeds the limit.
+    URITooLong:
+      description: "The request URL is too long. You can avoid this error by using\
+        \ a POST request instead of a GET request, and sending the parameters in the\
+        \ HTTP body."
+    UnsupportedMediaTypeGlossaries:
+      description: The requested entries format specified in the `Accept` header is
+        not supported.
+    TooManyRequests:
+      description: Too many requests. Please wait and resend your request.
+    QuotaExceeded:
+      description: Quota exceeded. The character limit has been reached.
+    InternalServerError:
+      description: Internal error.
+    ServiceUnavailable:
+      description: Resource currently unavailable. Try again later.
+    ServiceUnavailable503DocTransDownload:
+      content:
+        application/json:
+          examples:
+            AlreadyDownloaded:
+              summary: Already downloaded
+              value:
+                message: Document already downloaded
+          schema:
+            $ref: '#/components/schemas/DocumentTranslationError'
+      description: |-
+        A 503 result will be returned if the user tries to download a translated document that is currently being processed and is not yet ready for download.
+        Please make sure to check that the document status is 'done' before trying to send a download request.
+  schemas:
+    DocumentTranslationError:
+      properties:
+        message:
+          description: detailed error message
+          type: string
+      type: object
+    Formality:
+      default: default
+      description: "Sets whether the translated text should lean towards formal or\
+        \ informal language.\nThis feature currently only works for target languages\n\
+        `DE` (German),\n`FR` (French),\n`IT` (Italian),\n`ES` (Spanish),\n`NL` (Dutch),\n\
+        `PL` (Polish),\n`PT-PT`,\n`PT-BR` (Portuguese)\nand `RU` (Russian).\nPossible\
+        \ options are:\n  * `default`\n  * `more` - for a more formal language\n \
+        \ * `less` - for a more informal language"
+      enum:
+      - default
+      - more
+      - less
+      type: string
+    GlossaryId:
+      description: A unique ID assigned to a glossary.
+      example: def3a26b-3e84-45b3-84ae-0c0aaf3525f7
+      type: string
+    Glossary:
+      example:
+        glossary_id: def3a26b-3e84-45b3-84ae-0c0aaf3525f7
+        ready: true
+        name: My Glossary
+        source_lang: en
+        target_lang: de
+        creation_time: 2021-08-03T14:16:18.329Z
+        entry_count: 1
+      properties:
+        glossary_id:
+          description: A unique ID assigned to a glossary.
+          example: def3a26b-3e84-45b3-84ae-0c0aaf3525f7
+          type: string
+        name:
+          description: Name associated with the glossary.
+          type: string
+        ready:
+          description: "Indicates if the newly created glossary can already be used\
+            \ in `translate` requests.\nIf the created glossary is not yet ready,\
+            \ you have to wait and check the `ready` status\nof the glossary before\
+            \ using it in a `translate` request."
+          type: boolean
+        source_lang:
+          $ref: '#/components/schemas/GlossarySourceLanguage'
+        target_lang:
+          $ref: '#/components/schemas/GlossaryTargetLanguage'
+        creation_time:
+          description: "The creation time of the glossary in the ISO 8601-1:2019 format\
+            \ (e.g.: `2021-08-03T14:16:18.329Z`)."
+          format: date-time
+          type: string
+        entry_count:
+          description: The number of entries in the glossary.
+          type: integer
+      type: object
+    GlossarySourceLanguage:
+      description: The language in which the source texts in the glossary are specified.
+      enum:
+      - de
+      - en
+      - es
+      - fr
+      - ja
+      example: de
+      type: string
+    GlossaryTargetLanguage:
+      description: The language in which the target texts in the glossary are specified.
+      enum:
+      - de
+      - en
+      - es
+      - fr
+      - ja
+      example: en
+      type: string
+    SourceLanguage:
+      description: "Language of the text to be translated. Options currently available:\n\
+        \ * `BG` - Bulgarian\n * `CS` - Czech\n * `DA` - Danish\n * `DE` - German\n\
+        \ * `EL` - Greek\n * `EN` - English\n * `ES` - Spanish\n * `ET` - Estonian\n\
+        \ * `FI` - Finnish\n * `FR` - French\n * `HU` - Hungarian\n * `ID` - Indonesian\n\
+        \ * `IT` - Italian\n * `JA` - Japanese\n * `LT` - Lithuanian\n * `LV` - Latvian\n\
+        \ * `NL` - Dutch\n * `PL` - Polish\n * `PT` - Portuguese (all Portuguese varieties\
+        \ mixed)\n * `RO` - Romanian\n * `RU` - Russian\n * `SK` - Slovak\n * `SL`\
+        \ - Slovenian\n * `SV` - Swedish\n * `TR` - Turkish\n * `ZH` - Chinese\n\n\
+        If this parameter is omitted, the API will attempt to detect the language\
+        \ of the text and translate it."
+      enum:
+      - BG
+      - CS
+      - DA
+      - DE
+      - EL
+      - EN
+      - ES
+      - ET
+      - FI
+      - FR
+      - HU
+      - ID
+      - IT
+      - JA
+      - LT
+      - LV
+      - NL
+      - PL
+      - PT
+      - RO
+      - RU
+      - SK
+      - SL
+      - SV
+      - TR
+      - ZH
+      type: string
+    TargetLanguage:
+      description: |-
+        The language into which the text should be translated. Options currently available:
+         * `BG` - Bulgarian
+         * `CS` - Czech
+         * `DA` - Danish
+         * `DE` - German
+         * `EL` - Greek
+         * `EN` - English (unspecified variant for backward compatibility; please select `EN-GB` or `EN-US` instead)
+         * `EN-GB` - English (British)
+         * `EN-US` - English (American)
+         * `ES` - Spanish
+         * `ET` - Estonian
+         * `FI` - Finnish
+         * `FR` - French
+         * `HU` - Hungarian
+         * `ID` - Indonesian
+         * `IT` - Italian
+         * `JA` - Japanese
+         * `LT` - Lithuanian
+         * `LV` - Latvian
+         * `NL` - Dutch
+         * `PL` - Polish
+         * `PT` - Portuguese (unspecified variant for backward compatibility; please select `PT-BR` or `PT-PT` instead)
+         * `PT-BR` - Portuguese (Brazilian)
+         * `PT-PT` - Portuguese (all Portuguese varieties excluding Brazilian Portuguese)
+         * `RO` - Romanian
+         * `RU` - Russian
+         * `SK` - Slovak
+         * `SL` - Slovenian
+         * `SV` - Swedish
+         * `TR` - Turkish
+         * `ZH` - Chinese
+      enum:
+      - BG
+      - CS
+      - DA
+      - DE
+      - EL
+      - EN-GB
+      - EN-US
+      - ES
+      - ET
+      - FI
+      - FR
+      - HU
+      - ID
+      - IT
+      - JA
+      - LT
+      - LV
+      - NL
+      - PL
+      - PT-BR
+      - PT-PT
+      - RO
+      - RU
+      - SK
+      - SL
+      - SV
+      - TR
+      - ZH
+      type: string
+    translateText_request:
+      properties:
+        text:
+          description: Text to be translated. Only UTF-8-encoded plain text is supported.
+            The parameter may be specified multiple times and translations are returned
+            in the same order as they are requested. Each of the parameter values
+            may contain multiple sentences. Up to 50 texts can be sent for translation
+            in one request.
+          items:
+            type: string
+          maxItems: 50
+          type: array
+        source_lang:
+          $ref: '#/components/schemas/SourceLanguage'
+        target_lang:
+          $ref: '#/components/schemas/TargetLanguage'
+        split_sentences:
+          default: "1"
+          description: "Sets whether the translation engine should first split the\
+            \ input into sentences. This is enabled by default. Possible values are:\n\
+            \ * `0` - no splitting at all, whole input is treated as one sentence\n\
+            \ * `1` - splits on punctuation and on newlines\n * `nonewlines` - splits\
+            \ on punctuation only, ignoring newlines\n\nFor applications that send\
+            \ one sentence per text parameter, it is advisable to set `split_sentences`\
+            \ to `0`, in order to prevent the engine from splitting the sentence unintentionally.\n\
+            \n\nPlease note that newlines will split sentences. You should therefore\
+            \ clean files to avoid breaking sentences or set the parameter `split_sentences`\
+            \ to `nonewlines`. In the example below, the two parts of the sentence\
+            \ have been translated separately and this has caused an error: The word\
+            \ \"the\" has been incorrectly translated as \"die\" (the feminine definite\
+            \ article in German), though the German word for \"sentence\", \"Satz\"\
+            , is masculine (der Satz).\n * Example request:\n```\n<div>This is the\
+            \ first\nsentence.</div>\n```\n * Example response:\n```\n<div>Dies ist\
+            \ die erste\nSatz.</div>\n```"
+          enum:
+          - "0"
+          - "1"
+          - nonewlines
+          type: string
+        preserve_formatting:
+          default: "0"
+          description: "Sets whether the translation engine should respect the original\
+            \ formatting, even if it would usually correct some aspects. Possible\
+            \ values are:\n * `0`\n * `1`\n\nThe formatting aspects affected by this\
+            \ setting include:\n * Punctuation at the beginning and end of the sentence\n\
+            \ * Upper/lower case at the beginning of the sentence"
+          enum:
+          - "0"
+          - "1"
+          type: string
+        formality:
+          $ref: '#/components/schemas/Formality'
+        glossary_id:
+          description: Specify the glossary to use for the translation. **Important:**
+            This requires the `source_lang` parameter to be set and the language pair
+            of the glossary has to match the language pair of the request.
+          type: string
+        tag_handling:
+          description: "Sets which kind of tags should be handled. Options currently\
+            \ available:\n * `xml`: Enable XML tag handling; see [Handling XML](https://www.deepl.com/docs-api/xml).\n\
+            \ * `html`: Enable HTML tag handling; see [Handling HTML (Beta)](https://www.deepl.com/docs-api/html)."
+          enum:
+          - xml
+          - html
+          type: string
+        non_splitting_tags:
+          description: "Comma-separated list of XML tags which never split sentences.\n\
+            \n\nFor some XML files, finding tags with textual content and splitting\
+            \ sentences using those tags won't yield the best results. The following\
+            \ example shows the engine splitting sentences on `par` tags and proceeding\
+            \ to translate the parts separately, resulting in an incorrect translation:\n\
+            \ * Example request:\n```\n<par>The firm said it had been </par><par>\
+            \ conducting an internal investigation.</par>\n```\n * Example response:\n\
+            ```\n<par>Die Firma sagte, es sei eine gute Idee gewesen.</par><par> Durchfü\
+            hrung einer internen Untersuchung.</par>\n```\n\n\nAs this can lead to\
+            \ bad translations, this type of structure should either be avoided, or\
+            \ the `non_splitting_tags` parameter should be set. The following example\
+            \ shows the same call, with the parameter set to `par`:\n * Example request:\n\
+            ```\n<par>The firm said it had been </par><par> conducting an internal\
+            \ investigation.</par>\n```\n * Example response:\n```\n<par>Die Firma\
+            \ sagte, dass sie</par><par> eine interne Untersuchung durchgeführt</par><par>\
+            \ habe</par><par>.</par>\n```\n\n\nThis time, the sentence is translated\
+            \ as a whole. The XML tags are now considered markup and copied into the\
+            \ translated sentence. As the translation of the words \"had been\" has\
+            \ moved to another position in the German sentence, the two par tags are\
+            \ duplicated (which is expected here)."
+          type: string
+        outline_detection:
+          description: "The automatic detection of the XML structure won't yield best\
+            \ results in all XML files. You can disable this automatic mechanism altogether\
+            \ by setting the `outline_detection` parameter to `0` and selecting the\
+            \ tags that should be considered structure tags. This will split sentences\
+            \ using the `splitting_tags` parameter.\n\n\nIn the example below, we\
+            \ achieve the same results as the automatic engine by disabling automatic\
+            \ detection with `outline_detection=0` and setting the parameters manually\
+            \ to `tag_handling=xml`, `split_sentences=nonewlines`,  and `splitting_tags=par,title`.\n\
+            \ * Example request:\n\n\n    <document>\n      <meta>\n        <title>A\
+            \ document's title</title>\n      </meta>\n      <content>\n        <par>This\
+            \ is the first sentence. Followed by a second one.</par>\n        <par>This\
+            \ is the third sentence.</par>\n      </content>\n    </document>\n\n\
+            \ * Example response:\n\n\n    <document>\n      <meta>\n        <title>Der\
+            \ Titel eines Dokuments</title>\n      </meta>\n      <content>\n    \
+            \    <par>Das ist der erste Satz. Gefolgt von einem zweiten.</par>\n \
+            \       <par>Dies ist der dritte Satz.</par>\n      </content>\n    </document>\n\
+            \n\nWhile this approach is slightly more complicated, it allows for greater\
+            \ control over the structure of the translation output."
+          enum:
+          - "0"
+          type: string
+        splitting_tags:
+          description: |-
+            Comma-separated list of XML tags which always cause splits.
+
+
+            See the example in the `outline_detection` parameter's description.
+          type: string
+        ignore_tags:
+          description: "Comma-separated list of XML tags that indicate text not to\
+            \ be translated.\n\n\nUse this paramter to ensure that elements in the\
+            \ original text are not altered in the translation (e.g., trademarks,\
+            \ product names) and insert tags into your original text. In the following\
+            \ example, the `ignore_tags` parameter is set to `keep`:\n * Example request:\n\
+            ```\nPlease open the page <keep>Settings</keep> to configure your system.\n\
+            ```\n * Example response:\n```\nBitte öffnen Sie die Seite <keep>Settings</keep>\
+            \ um Ihr System zu konfigurieren.\n```"
+          type: string
+      required:
+      - target_lang
+      - text
+      type: object
+    translateText_200_response_translations_inner:
+      example:
+        detected_source_language: ""
+        text: text
+      properties:
+        detected_source_language:
+          allOf:
+          - $ref: '#/components/schemas/SourceLanguage'
+          - description: "The language detected in the source text. It reflects the\
+              \ value of the `source_lang` parameter, when specified."
+        text:
+          description: The translated text.
+          type: string
+      type: object
+    translateText_200_response:
+      example:
+        translations:
+        - detected_source_language: ""
+          text: text
+        - detected_source_language: ""
+          text: text
+      properties:
+        translations:
+          items:
+            $ref: '#/components/schemas/translateText_200_response_translations_inner'
+          minItems: 1
+          type: array
+      type: object
+    translateDocument_request:
+      properties:
+        source_lang:
+          $ref: '#/components/schemas/SourceLanguage'
+        target_lang:
+          $ref: '#/components/schemas/TargetLanguage'
+        file:
+          description: "The document file to be translated. The file name should be\
+            \ included in this part's content disposition. As an alternative, the\
+            \ filename parameter can be used. The following file types and extensions\
+            \ are supported:\n  * `docx` - Microsoft Word Document\n  * `pptx` - Microsoft\
+            \ PowerPoint Document\n  * `pdf` - Portable Document Format\n  * `htm\
+            \ / html` - HTML Document\n  * `txt` - Plain Text Document\n\nPlease note\
+            \ that in order to translate PDF documents you need to give one-time consent\
+            \ to using the Adobe API via the account interface."
+          format: binary
+          type: string
+        filename:
+          description: The name of the uploaded file. Can be used as an alternative
+            to including the file name in the file part's content disposition.
+          type: string
+        formality:
+          $ref: '#/components/schemas/Formality'
+        glossary_id:
+          $ref: '#/components/schemas/GlossaryId'
+      required:
+      - file
+      - target_lang
+      type: object
+    translateDocument_200_response:
+      example:
+        document_id: document_id
+        document_key: document_key
+      properties:
+        document_id:
+          description: A unique ID assigned to the uploaded document and the translation
+            process. Must be used when referring to this particular document in subsequent
+            API requests.
+          type: string
+        document_key:
+          description: A unique key that is used to encrypt the uploaded document
+            as well as the resulting translation on the server side. Must be provided
+            with every subsequent API request regarding this particular document.
+          type: string
+      type: object
+    getDocumentStatus_request:
+      properties:
+        document_key:
+          description: The document encryption key that was sent to the client when
+            the document was uploaded to the API.
+          example: 0CB0054F1C132C1625B392EADDA41CB754A742822F6877173029A6C487E7F60A
+          type: string
+      required:
+      - document_key
+      type: object
+    getDocumentStatus_200_response:
+      example:
+        error_message: error_message
+        seconds_remaining: 0
+        document_id: document_id
+        billed_characters: 6
+        status: queued
+      properties:
+        document_id:
+          description: A unique ID assigned to the uploaded document and the requested
+            translation process. The same ID that was used when requesting the translation
+            status.
+          type: string
+        status:
+          description: |-
+            A short description of the state the document translation process is currently in. Possible values are:
+             * `queued` - the translation job is waiting in line to be processed
+             * `translating` - the translation is currently ongoing
+             * `done` - the translation is done and the translated document is ready for download
+             * `error` - an irrecoverable error occurred while translating the document
+          enum:
+          - queued
+          - translating
+          - done
+          - error
+          type: string
+        seconds_remaining:
+          description: |-
+            Estimated number of seconds until the translation is done.
+            This parameter is only included while `status` is `"translating"`.
+          type: integer
+        billed_characters:
+          description: The number of characters billed to your account.
+          type: integer
+        error_message:
+          description: "A short description of the error, if available.\nNote that\
+            \ the content is subject to change.\nThis parameter may be included if\
+            \ an error occurred during translation."
+          type: string
+      required:
+      - document_id
+      - status
+      type: object
+    listGlossaryLanguages_200_response_supported_languages_inner:
+      example:
+        target_lang: target_lang
+        source_lang: source_lang
+      properties:
+        source_lang:
+          description: The language in which the source texts in the glossary are
+            specified.
+          type: string
+        target_lang:
+          description: The language in which the target texts in the glossary are
+            specified.
+          type: string
+      required:
+      - source_lang
+      - target_lang
+      type: object
+    listGlossaryLanguages_200_response:
+      example:
+        supported_languages:
+        - target_lang: target_lang
+          source_lang: source_lang
+        - target_lang: target_lang
+          source_lang: source_lang
+      properties:
+        supported_languages:
+          description: The list of supported languages
+          items:
+            $ref: '#/components/schemas/listGlossaryLanguages_200_response_supported_languages_inner'
+          type: array
+      type: object
+    listGlossaryLanguages_400_response:
+      properties:
+        message:
+          description: Generic description of the error.
+          type: string
+        detail:
+          description: More specific description of the error.
+          type: string
+      type: object
+    listGlossaries_200_response:
+      example:
+        glossaries:
+        - glossary_id: def3a26b-3e84-45b3-84ae-0c0aaf3525f7
+          ready: true
+          name: My Glossary
+          source_lang: en
+          target_lang: de
+          creation_time: 2021-08-03T14:16:18.329Z
+          entry_count: 1
+        - glossary_id: def3a26b-3e84-45b3-84ae-0c0aaf3525f7
+          ready: true
+          name: My Glossary
+          source_lang: en
+          target_lang: de
+          creation_time: 2021-08-03T14:16:18.329Z
+          entry_count: 1
+      properties:
+        glossaries:
+          items:
+            $ref: '#/components/schemas/Glossary'
+          type: array
+      type: object
+    createGlossary_request:
+      properties:
+        name:
+          description: Name to be associated with the glossary.
+          example: My Glossary
+          type: string
+        source_lang:
+          $ref: '#/components/schemas/GlossarySourceLanguage'
+        target_lang:
+          $ref: '#/components/schemas/GlossaryTargetLanguage'
+        entries:
+          description: The entries of the glossary. The entries have to be specified
+            in the format provided by the `entries_format` parameter.
+          example: "Hello!\tGuten Tag!"
+          type: string
+        entries_format:
+          description: "The format in which the glossary entries are provided. Formats\
+            \ currently available:\n* `tsv` - Tab-separated values. Entries have to\
+            \ be specified as tab-separated values with the \"source entry\" being\
+            \ the text in the source language of the glossary and the \"target entry\"\
+            \ being the text in the target language of the glossary.\n\n  In addition\
+            \ the following restrictions apply:\n    * Duplicate source entries are\
+            \ not allowed.\n    * Source-target entry pairs are separated by a newline.\n\
+            \    * Source entries and target entries are separated by a tab.\n   \
+            \ * Source entries and target entries are not empty.\n    * Source and\
+            \ target entries must not contain any [C0 or C1 control characters](https://en.wikipedia.org/wiki/C0_and_C1_control_codes)\
+            \ (including e.g. `\"\\t\"` or `\"\\n\"`) or any [Unicode newline](https://en.wikipedia.org/wiki/Newline#Unicode).\n\
+            \    * Source and target entries must not contain any leading or trailing\
+            \ Unicode whitespace.\n\n  Valid glossary entries in the TSV format could\
+            \ be created in a programming language with backslash escape sequences\
+            \ (e.g. Python, JavaScript, etc.) like this:\n\n  `\"sourceEntry1\\ttargetEntry1\\\
+            nsourceEntry2\\targetEntry2\"`"
+          enum:
+          - tsv
+          example: tsv
+          type: string
+      required:
+      - entries
+      - entries_format
+      - name
+      - source_lang
+      - target_lang
+      type: object
+    getUsage_200_response:
+      example:
+        team_document_limit: 5
+        team_document_count: 2
+        document_count: 5
+        document_limit: 1
+        character_limit: 6
+        character_count: 0
+      properties:
+        character_count:
+          description: Characters translated so far in the current billing period.
+          format: int64
+          type: integer
+        character_limit:
+          description: Current maximum number of characters that can be translated
+            per billing period.
+          format: int64
+          type: integer
+        document_limit:
+          description: Documents translated so far in the current billing period.
+          format: int64
+          type: integer
+        document_count:
+          description: Current maximum number of documents that can be translated
+            per billing period.
+          format: int64
+          type: integer
+        team_document_limit:
+          description: Documents translated by all users in the team so far in the
+            current billing period.
+          format: int64
+          type: integer
+        team_document_count:
+          description: Current maximum number of documents that can be translated
+            by the team per billing period.
+          format: int64
+          type: integer
+      type: object
+    getLanguages_200_response_inner:
+      example:
+        supports_formality: true
+        name: name
+        language: language
+      properties:
+        language:
+          description: The language code of the given language.
+          type: string
+        name:
+          description: Name of the language in English.
+          type: string
+        supports_formality:
+          description: Denotes formality support in case of a target language listing.
+          type: boolean
+      required:
+      - language
+      - name
+      type: object
+  securitySchemes:
+    auth_header:
+      description: Authentication with `Authorization` header and `DeepL-Auth-Key`
+        authentication scheme
+      in: header
+      name: Authorization
+      type: apiKey
