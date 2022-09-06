@@ -1,4 +1,4 @@
-module github.com/GIT_USER_ID/GIT_REPO_ID
+module github.com/redwerkz/deepl-translator-go-api-client
 
 go 1.13
 
